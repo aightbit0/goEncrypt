@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -19,39 +18,43 @@ func main() {
 		var password string
 		var typeOfCrypt string
 		var sure string
+
 		fmt.Print("Path to encrypt/decrypt Data -> ")
 		fmt.Scan(&path)
-		fmt.Print("password -> ")
-		fmt.Scan(&password)
-		npw := ""
-		if len(password) < 32 || len(password) > 32 {
-			fmt.Println("drinnen")
-			npw = genertateSecurePassword(password)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			fmt.Println("path not found")
 		} else {
-			npw = password
-		}
-		fmt.Print("encrypt or decrypt -> ")
-		fmt.Scan(&typeOfCrypt)
-		allFiles := fillFiles(path, typeOfCrypt)
-		for _, f := range allFiles {
-			fmt.Println(f)
-		}
-		fmt.Print("are you sure to do this action y/n -> ")
-		fmt.Scan(&sure)
-		if sure == "y" {
-			if typeOfCrypt == "encrypt" {
-				for _, v := range allFiles {
-					encryptor([]byte(npw), v)
-				}
-			} else if typeOfCrypt == "decrypt" {
-				for _, v := range allFiles {
-					decryptor([]byte(npw), v)
+			fmt.Print("password -> ")
+			fmt.Scan(&password)
+			npw := ""
+			if len(password) < 32 || len(password) > 32 {
+				npw = genertateSecurePassword(password)
+			} else {
+				npw = password
+			}
+			fmt.Print("encrypt or decrypt -> ")
+			fmt.Scan(&typeOfCrypt)
+			allFiles := fillFiles(path, typeOfCrypt)
+			for _, f := range allFiles {
+				fmt.Println(f)
+			}
+			fmt.Print("are you sure to do this action y/n -> ")
+			fmt.Scan(&sure)
+			if sure == "y" {
+				if typeOfCrypt == "encrypt" {
+					for _, v := range allFiles {
+						encryptor([]byte(npw), v)
+					}
+				} else if typeOfCrypt == "decrypt" {
+					for _, v := range allFiles {
+						decryptor([]byte(npw), v)
+					}
+				} else {
+					fmt.Println("Unknown command")
 				}
 			} else {
-				fmt.Println("Unknown command")
+				fmt.Println("Cancelled")
 			}
-		} else {
-			fmt.Println("Cancelled")
 		}
 	}
 }
@@ -70,13 +73,13 @@ func fillFiles(path string, crypttype string) []string {
 					files = append(files, path)
 				}
 			}
-
 		}
+
 		return nil
 	})
 
 	if err != nil {
-		panic(err)
+		fmt.Println("fail")
 	}
 
 	return files
@@ -88,7 +91,7 @@ func encryptor(secret []byte, file string) {
 	cipherImage := encryptionClient.EncryptAES(image, secret)
 	err := utils.WriteFile(cipherImage, file)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println("fail encrypt")
 	}
 	os.Rename(file, file+".gocrypt")
 	fmt.Println("Encrypt successfull")
@@ -100,7 +103,7 @@ func decryptor(key []byte, file string) {
 	plainImage := encryptionClient.DecryptAES(encryptedImage, key)
 	err := utils.WriteFile(plainImage, file)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println("fail decrypt")
 	}
 	res1 := strings.ReplaceAll(file, ".gocrypt", "")
 	os.Rename(file, res1)
