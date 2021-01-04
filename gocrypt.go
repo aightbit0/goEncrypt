@@ -91,11 +91,13 @@ func encryptor(secret []byte, file string) {
 	cipherImage := encryptionClient.EncryptAES(image, secret)
 	if len(cipherImage) == 0 {
 		fmt.Println("Wrong password or empty data")
+		fmt.Println(file)
 		return
 	}
 	err := utils.WriteFile(cipherImage, file)
 	if err != nil {
 		fmt.Println("fail encrypt")
+		fmt.Println(file)
 	}
 	os.Rename(file, file+".gocrypt")
 	fmt.Println("Encrypt successfull")
@@ -107,11 +109,13 @@ func decryptor(key []byte, file string) {
 	plainImage := encryptionClient.DecryptAES(encryptedImage, key)
 	if len(plainImage) == 0 {
 		fmt.Println("Wrong password or empty data")
+		fmt.Println(file)
 		return
 	}
 	err := utils.WriteFile(plainImage, file)
 	if err != nil {
 		fmt.Println("fail decrypt")
+		fmt.Println(file)
 	}
 	res1 := strings.ReplaceAll(file, ".gocrypt", "")
 	os.Rename(file, res1)
