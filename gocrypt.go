@@ -89,6 +89,10 @@ func encryptor(secret []byte, file string) {
 	image := utils.ReadFile(file)
 	encryptionClient := encryption.NewClient()
 	cipherImage := encryptionClient.EncryptAES(image, secret)
+	if len(cipherImage) == 0 {
+		fmt.Println("Wrong password or empty data")
+		return
+	}
 	err := utils.WriteFile(cipherImage, file)
 	if err != nil {
 		fmt.Println("fail encrypt")
@@ -101,6 +105,10 @@ func decryptor(key []byte, file string) {
 	encryptionClient := encryption.NewClient()
 	encryptedImage := utils.ReadFile(file)
 	plainImage := encryptionClient.DecryptAES(encryptedImage, key)
+	if len(plainImage) == 0 {
+		fmt.Println("Wrong password or empty data")
+		return
+	}
 	err := utils.WriteFile(plainImage, file)
 	if err != nil {
 		fmt.Println("fail decrypt")
