@@ -14,15 +14,15 @@ go get -u github.com/aightbit0/goEncrypt
 # Usage
 ```golang
 //generate a strong password
-bytes := GenertateSecurePassword("a strong password")
+bytes := gocrypt.GenertateSecurePassword("a strong password")
 
 //convert to hexadecimal
 key := hex.EncodeToString(bytes)
 
 //encrypt data with given password
-Goencrypt(pathtofile, key)
+gocrypt.Goencrypt(pathtofile, key)
 
 //decrypt data with given password
-Godecrypt(pathtofile, key)
+gocrypt.Godecrypt(pathtofile, key)
 ```
 
