@@ -1,4 +1,4 @@
-package main
+package gocrypt
 
 import (
 	"crypto/aes"
@@ -30,7 +30,7 @@ func main() {
 		} else {
 			fmt.Print("password -> ")
 			fmt.Scan(&password)
-			bytes := genertateSecurePassword(password)
+			bytes := GenertateSecurePassword(password)
 			key := hex.EncodeToString(bytes)
 			fmt.Printf("key to encrypt/decrypt : %s\n", key)
 			fmt.Print("encrypt or decrypt -> ")
@@ -47,11 +47,11 @@ func main() {
 			if sure == "y" {
 				if typeOfCrypt == "encrypt" {
 					for _, v := range allFiles {
-						encrypt(v, key)
+						Goencrypt(v, key)
 					}
 				} else if typeOfCrypt == "decrypt" {
 					for _, v := range allFiles {
-						decrypt(v, key)
+						Godecrypt(v, key)
 					}
 				} else {
 					fmt.Println("Unknown command")
@@ -89,7 +89,8 @@ func fillFiles(path string, crypttype string) []string {
 	return files
 }
 
-func encrypt(file string, keyString string) {
+//Goencrypt ...
+func Goencrypt(file string, keyString string) {
 	key, _ := hex.DecodeString(keyString)
 	plaintext, fileerror := ioutil.ReadFile(file)
 
@@ -128,7 +129,8 @@ func encrypt(file string, keyString string) {
 	fmt.Println("Encrypt successfull")
 }
 
-func decrypt(file string, keyString string) {
+//Godecrypt ...
+func Godecrypt(file string, keyString string) {
 	key, _ := hex.DecodeString(keyString)
 	enc, fileerror := ioutil.ReadFile(file)
 
@@ -173,10 +175,11 @@ func decrypt(file string, keyString string) {
 	fmt.Println("Decrypt successfull")
 }
 
-func genertateSecurePassword(pw string) []byte {
+//GenertateSecurePassword ...
+func GenertateSecurePassword(pw string) []byte {
 	s := strings.Split(pw, "")
 
-	if len(pw) > 32 {
+	if len(pw) >= 32 {
 		pw = strings.Join(s[:32], "")
 		return []byte(pw)
 	}
@@ -195,6 +198,8 @@ func genertateSecurePassword(pw string) []byte {
 			counter = 0
 		}
 	}
+
 	fmt.Println("internal PW used: ", pw)
+
 	return []byte(pw)
 }
