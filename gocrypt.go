@@ -1,14 +1,17 @@
 package main
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"github.com/purnaresa/bulwark/encryption"
-	"github.com/purnaresa/bulwark/utils"
 )
 
 func main() {
@@ -21,33 +24,34 @@ func main() {
 
 		fmt.Print("Path to encrypt/decrypt Data -> ")
 		fmt.Scan(&path)
+
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			fmt.Println("path not found")
 		} else {
 			fmt.Print("password -> ")
 			fmt.Scan(&password)
-			npw := ""
-			if len(password) < 32 || len(password) > 32 {
-				npw = genertateSecurePassword(password)
-			} else {
-				npw = password
-			}
+			bytes := genertateSecurePassword(password)
+			key := hex.EncodeToString(bytes)
+			fmt.Printf("key to encrypt/decrypt : %s\n", key)
 			fmt.Print("encrypt or decrypt -> ")
 			fmt.Scan(&typeOfCrypt)
 			allFiles := fillFiles(path, typeOfCrypt)
+
 			for _, f := range allFiles {
 				fmt.Println(f)
 			}
+
 			fmt.Print("are you sure to do this action y/n -> ")
 			fmt.Scan(&sure)
+
 			if sure == "y" {
 				if typeOfCrypt == "encrypt" {
 					for _, v := range allFiles {
-						encryptor([]byte(npw), v)
+						encrypt(v, key)
 					}
 				} else if typeOfCrypt == "decrypt" {
 					for _, v := range allFiles {
-						decryptor([]byte(npw), v)
+						decrypt(v, key)
 					}
 				} else {
 					fmt.Println("Unknown command")
@@ -85,49 +89,98 @@ func fillFiles(path string, crypttype string) []string {
 	return files
 }
 
-func encryptor(secret []byte, file string) {
-	image := utils.ReadFile(file)
-	encryptionClient := encryption.NewClient()
-	cipherImage := encryptionClient.EncryptAES(image, secret)
-	if len(cipherImage) == 0 {
-		fmt.Println("Wrong password or empty data")
-		fmt.Println(file)
+func encrypt(file string, keyString string) {
+	key, _ := hex.DecodeString(keyString)
+	plaintext, fileerror := ioutil.ReadFile(file)
+
+	if fileerror != nil || len(plaintext) == 0 {
+		fmt.Println(file, "error empty file")
 		return
 	}
-	err := utils.WriteFile(cipherImage, file)
+
+	block, err := aes.NewCipher(key)
+
 	if err != nil {
-		fmt.Println("fail encrypt")
-		fmt.Println(file)
+		panic(err.Error())
 	}
+
+	aesGCM, err := cipher.NewGCM(block)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	nonce := make([]byte, aesGCM.NonceSize())
+
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		panic(err.Error())
+	}
+
+	ciphertext := aesGCM.Seal(nonce, nonce, plaintext, nil)
+	errorr := ioutil.WriteFile(file, ciphertext, 0644)
+
+	if errorr != nil {
+		fmt.Println(file, "ERROR")
+		return
+	}
+
 	os.Rename(file, file+".gocrypt")
 	fmt.Println("Encrypt successfull")
 }
 
-func decryptor(key []byte, file string) {
-	encryptionClient := encryption.NewClient()
-	encryptedImage := utils.ReadFile(file)
-	plainImage := encryptionClient.DecryptAES(encryptedImage, key)
-	if len(plainImage) == 0 {
-		fmt.Println("Wrong password or empty data")
-		fmt.Println(file)
+func decrypt(file string, keyString string) {
+	key, _ := hex.DecodeString(keyString)
+	enc, fileerror := ioutil.ReadFile(file)
+
+	if fileerror != nil {
+		fmt.Println(file, "error")
+	}
+
+	block, err := aes.NewCipher(key)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	aesGCM, err := cipher.NewGCM(block)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	nonceSize := aesGCM.NonceSize()
+	nonce, ciphertext := enc[:nonceSize], enc[nonceSize:]
+	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
+
+	if len(plaintext) == 0 {
+		fmt.Println("ERROR wrong password?", file)
 		return
 	}
-	err := utils.WriteFile(plainImage, file)
+
 	if err != nil {
-		fmt.Println("fail decrypt")
-		fmt.Println(file)
+		fmt.Println(file, "ERROR")
+		return
 	}
+
+	rrorr := ioutil.WriteFile(file, plaintext, 0644)
+	if rrorr != nil {
+		fmt.Println(file, "ERROR")
+		return
+	}
+
 	res1 := strings.ReplaceAll(file, ".gocrypt", "")
 	os.Rename(file, res1)
 	fmt.Println("Decrypt successfull")
 }
 
-func genertateSecurePassword(pw string) string {
+func genertateSecurePassword(pw string) []byte {
 	s := strings.Split(pw, "")
+
 	if len(pw) > 32 {
 		pw = strings.Join(s[:32], "")
-		return pw
+		return []byte(pw)
 	}
+
 	counter := 0
 	for len(pw) < 32 {
 		if counter%4 == 0 {
@@ -137,10 +190,11 @@ func genertateSecurePassword(pw string) string {
 		}
 
 		counter++
+
 		if counter >= len(s) {
 			counter = 0
 		}
 	}
 	fmt.Println("internal PW used: ", pw)
-	return pw
+	return []byte(pw)
 }
