@@ -14,56 +14,8 @@ import (
 	"strings"
 )
 
-func main() {
-
-	for {
-		var path string
-		var password string
-		var typeOfCrypt string
-		var sure string
-
-		fmt.Print("Path to encrypt/decrypt Data -> ")
-		fmt.Scan(&path)
-
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			fmt.Println("path not found")
-		} else {
-			fmt.Print("password -> ")
-			fmt.Scan(&password)
-			bytes := GenertateSecurePassword(password)
-			key := hex.EncodeToString(bytes)
-			fmt.Printf("key to encrypt/decrypt : %s\n", key)
-			fmt.Print("encrypt or decrypt -> ")
-			fmt.Scan(&typeOfCrypt)
-			allFiles := fillFiles(path, typeOfCrypt)
-
-			for _, f := range allFiles {
-				fmt.Println(f)
-			}
-
-			fmt.Print("are you sure to do this action y/n -> ")
-			fmt.Scan(&sure)
-
-			if sure == "y" {
-				if typeOfCrypt == "encrypt" {
-					for _, v := range allFiles {
-						Goencrypt(v, key)
-					}
-				} else if typeOfCrypt == "decrypt" {
-					for _, v := range allFiles {
-						Godecrypt(v, key)
-					}
-				} else {
-					fmt.Println("Unknown command")
-				}
-			} else {
-				fmt.Println("Cancelled")
-			}
-		}
-	}
-}
-
-func fillFiles(path string, crypttype string) []string {
+//FillFiles ...
+func FillFiles(path string, crypttype string) []string {
 	var files []string
 	root := path
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
