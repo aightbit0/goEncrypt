@@ -146,7 +146,7 @@ func GenertateSecurePassword(pw string) []byte {
 
 		counter++
 
-		if counter >= len(s) {
+		if counter >= 9 {
 			counter = 0
 		}
 	}
