@@ -151,7 +151,7 @@ func GenertateSecurePassword(pw string) []byte {
 		}
 	}
 
-	fmt.Println("internal PW used: ", pw)
+	//fmt.Println("internal PW used: ", pw)
 
 	return []byte(pw)
 }
